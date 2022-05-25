@@ -12,6 +12,7 @@
   "dependencies": {
     "blob": "^0.1.0",
     "body-parser": "^1.19.0",
+    "convert-excel-to-json": "^1.7.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
@@ -19,7 +20,8 @@
     "gifsicle": "^5.2.1",
     "image-conversion": "^2.1.1",
     "mongodb": "^4.1.4",
-    "pngquant-bin": "^6.0.1"
+    "pngquant-bin": "^6.0.1",
+    "xlsx": "^0.17.5"
   },
   "devDependencies": {
     "compress-images": "^2.0.4",
