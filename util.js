@@ -834,7 +834,8 @@ const getNextSemester=()=>{
             nextSemester="Spring";
             
         }
-        return nextSemester+year.toString().substring(2, 4);
+        // return nextSemester+year.toString().substring(2, 4);
+        return "Summer22";
 }
 module.exports = {cseCourses,countCredit,getNextSemester};
 // {

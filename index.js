@@ -7,6 +7,7 @@ const fileUpload=require('express-fileupload');
 const { MongoClient } = require('mongodb');
 const util = require("./util");
 const { json } = require('body-parser');
+const { type } = require('express/lib/response');
 
 
 const uri = "mongodb+srv://ciu-app-db:cIu12345@cluster0.xmdkt.mongodb.net/ciu-app?retryWrites=true&w=majority";
@@ -865,15 +866,11 @@ client.connect(err => {
 
     app.get('/getDataForAlterBatch/:semId',(req,res)=>{
       const semesterId=req.params.semId;
-      console.log(semesterId);
       customiseList_collection.find({"_id":semesterId})
       .toArray((err,listResult)=>{
         if(!err){
-          teachers_collection.aggregate( [ { $project : {  name : 1 } } ] )
-          .toArray((err,facultyResult)=>{
-            res.send({data:listResult,faculties:facultyResult});
-          })
-          console.log("custom list achieved");
+          res.send({data:listResult});
+          console.log(listResult[0].customiseList[0]);
         }
         else{
           console.log(err);
@@ -884,32 +881,24 @@ client.connect(err => {
     app.post('/confirmAdvisedCourseExternal/:semester',(req,res)=>{
       const newData=req.body;
       const semester=req.params.semester;
-      customiseList_collection.updateOne([
-        {_id:semester},
-        {}
-      ])
+      try{
+        customiseList_collection.replaceOne({_id:semester},newData)
+        .then(result=>{
+          if(result.acknowledged===true){
+            res.send(true);
+          }
+          else{
+            console.log("error");
+          }
+        });
+
+      }catch(e){
+        res.send(e);
+      }
+     
+
     })
-    app.post('/addRoutine/:type',(req,res)=>{
-      const routineObj=req.body;
-      const type=req.params.type;
-      'routine'!==type?routine_collection.insertOne(routineObj).then(result=>{console.log("added document");
-        if(result.acknowledged===true){
-          res.send(true);
-        }
-        else{
-          console.log("error");
-        }})
-      :routine_collection.replaceOne({_id:util.getNextSemester()},routineObj)
-      .then(result=>{
-        console.log("added document");
-        if(result.acknowledged===true){
-          res.send(true);
-        }
-        else{
-          console.log("error");
-        }
-      });
-    })
+   
     app.patch('/editClassRoom',(req,res)=>{
       const {room,timeSlots,dayFor}=req.body;
       const day=dayFor[0]==='S'?'slotsForST':dayFor[0]==='M'?'slotsForMW':'slotsForTH';
@@ -932,7 +921,7 @@ client.connect(err => {
         })
     })
     app.get('/getRoutine',(req,res)=>{
-
+      res.send(true);
     })
     app.delete('/deleteClassRoom/:id',(req,res)=>{
       const id=req.params.id;
@@ -949,54 +938,50 @@ client.connect(err => {
     // stCourseCompletion_collection.deleteMany({});
     // students_collection.deleteMany({});
     // rooms_collection.update({},{$set:{"roomType":'Theory'}});
-    routine_collection.find({_id:"Summer22"})
-    .toArray((err,result)=>{
-      // console.log(result[0].routine)
-      res.send(result[0].routine);
-      extra.insertOne({
-        _id:result[0]._id,
-        customiseList:result[0].routine,
-        removalCourses:[]
-      })
-    })
+    // routine_collection.find({_id:"Summer22"})
+    // .toArray((err,result)=>{
+    //   // console.log(result[0].routine)
+    //   res.send(result[0].routine);
+    //   extra.insertOne({
+    //     _id:result[0]._id,
+    //     customiseList:result[0].routine,
+    //     removalCourses:[]
+    //   })
+    // })
     // res.send(true);       
     })
 
-    app.get('/getSubjectforRoutine',(req,res)=>{
-      routine_collection.aggregate([
+    app.get('/getSubjectforRoutine/:option',(req,res)=>{
+      const option=req.params.option;
+      console.log(`getSubjectforRoutine ${option}`);
+      const semester=util.getNextSemester();
+      customiseList_collection.aggregate([
         {
-          "$match": {
-            _id:util.getNextSemester
-          }
+          "$match": { _id:semester}
         },
         {
-          "$unwind": "$routine"
+          "$unwind": "$customiseList"
         },
         {
-          "$unwind": "$routine._id"
+          "$unwind": "$customiseList._id"
         },
         {
           "$group": {
             "_id":null,
-            routine: {
-              "$push": {"_id":"$routine._id._id",
-              "faculty":"$routine.faculty",
-              "timeSlot":"$routine.timeSlot",
-              "roomNo":"$routine.roomNo",
-              "eligible":"$routine.eligibleStudents"
-            }
-          }
-        }
-        },
-        {
-          "$match": {
-            "routine.roomNo": ""
+            routineSubjects: {
+              "$push": {"_id":"$customiseList._id._id",
+              "faculty":"$customiseList.faculty",
+              "timeSlot":"$customiseList.timeSlot",
+              "roomNo":"$customiseList.roomNo",
+              "eligible":"$customiseList.eligibleStudents"
+            }}
           }
         },
-        { "$sort": { "routine._id.slNo" : 1 } },
+        { "$sort": { "customiseList._id.slNo" : 1 } },
         
       ]).toArray((err,result4)=>{
         if(!err){
+          console.log('=======',result4)
           res.send({data:result4[0]});
         }
         else{

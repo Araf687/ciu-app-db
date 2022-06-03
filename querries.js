@@ -190,3 +190,27 @@ db.collection.update({
   ]
 },
 )
+
+//==================extra
+app.post('/addRoutine/:type',(req,res)=>{
+  const routineObj=req.body;
+  const type=req.params.type;
+  'routine'!==type?routine_collection.insertOne(routineObj).then(result=>{console.log("added document");
+    if(result.acknowledged===true){
+      res.send(true);
+    }
+    else{
+      console.log("error");
+    }})
+  :routine_collection.replaceOne({_id:util.getNextSemester()},routineObj)
+  .then(result=>{
+    console.log("added document");
+    if(result.acknowledged===true){
+      res.send(true);
+    }
+    else{
+      console.log("error");
+    }
+  });
+})
+//=====================================================================x=========================
