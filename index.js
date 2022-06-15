@@ -920,8 +920,18 @@ client.connect(err => {
           
         })
     })
-    app.get('/getRoutine',(req,res)=>{
-      res.send(true);
+    app.get('/getRoutine/:sem',(req,res)=>{
+      const semester=req.params.sem;
+      console.log(semester)
+      routine_collection.find({_id:semester})
+      .toArray((err,result)=>{
+        if(!err){
+          res.send({data:result})
+        }
+        else{
+          res.send({error:err});
+        }
+      })
     })
     app.delete('/deleteClassRoom/:id',(req,res)=>{
       const id=req.params.id;
@@ -955,40 +965,64 @@ client.connect(err => {
       const option=req.params.option;
       console.log(`getSubjectforRoutine ${option}`);
       const semester=util.getNextSemester();
-      customiseList_collection.aggregate([
-        {
-          "$match": { _id:semester}
-        },
-        {
-          "$unwind": "$customiseList"
-        },
-        {
-          "$unwind": "$customiseList._id"
-        },
-        {
-          "$group": {
-            "_id":null,
-            routineSubjects: {
-              "$push": {"_id":"$customiseList._id._id",
-              "faculty":"$customiseList.faculty",
-              "timeSlot":"$customiseList.timeSlot",
-              "roomNo":"$customiseList.roomNo",
-              "eligible":"$customiseList.eligibleStudents"
-            }}
+      if(option==='create'){
+        customiseList_collection.aggregate([
+          {"$match": { _id:semester}},
+          {"$unwind": "$customiseList"},
+          {"$unwind": "$customiseList._id"},
+          { "$group": {"_id":null,
+              routineSubjects: {
+                "$push": {"_id":"$customiseList._id._id",
+                "faculty":"$customiseList.faculty",
+                "timeSlot":"$customiseList.timeSlot",
+                "roomNo":"$customiseList.roomNo",
+                "eligible":"$customiseList.eligibleStudents"}}}
+          },
+          { "$sort": { "customiseList._id.slNo" : 1 } }, 
+        ]).toArray((err,result4)=>{
+          if(!err){
+            res.send({data:result4[0]});
+          } else{
+            res.send(err);
           }
-        },
-        { "$sort": { "customiseList._id.slNo" : 1 } },
-        
-      ]).toArray((err,result4)=>{
-        if(!err){
-          console.log('=======',result4)
-          res.send({data:result4[0]});
-        }
-        else{
-          res.send(err);
-        }
-      })
+        })
+      }
+      else{
+        routine_collection.aggregate([{$match:{_id:semester}},{$project:{routine:0,_id:0}}])
+        .toArray((err,result)=>{
+          if(!err){
+            res.send(result[0]);
+          }
+          else{
+            res.send({error:err})
+          }
+        })
+      }
+
     })
+    app.post('/submitRoutine/:option',(req,res)=>{
+      let data=req.body;
+      const option=req.params.option;
+      data._id=util.getNextSemester();
+      if(option==='create'){
+        routine_collection.insertOne(data,(err,result)=>{
+          console.log(result)
+          if(err){
+            res.send({error:err});
+          }
+          else{
+            res.send(true);
+          }
+        })
+      }
+      else{
+        console.log(option);
+        res.send(true);
+      }
+      
+      
+    })
+
     app.get('/qCheck',(req,res)=>{
       admins_collection.updateOne(
         {_id:"Spring22"},
