@@ -307,7 +307,7 @@ const cseCourses=
         {
           "slNo":31,
           "name": "Digital Logic Design Lab",
-           "_id": "CSE213L",
+          "_id": "CSE213L",
           "type":"",
           "level":5,
           "creditHours":1,
@@ -316,7 +316,7 @@ const cseCourses=
         },
 
         {
-"slNo":32,
+          "slNo":32,
           "name": "Microprocessor and Interfacing",
            "_id": "CSE311",
           "type":"",
@@ -326,11 +326,11 @@ const cseCourses=
           "preReq": ["CSE213"]
         },
         {
-"slNo":33,
+          "slNo":33,
           "name": "Microprocessor and Interfacing Lab",
           "type":"",
           "level":6,
-                        "creditHours":1,
+          "creditHours":1,
           "category":"",
            "_id": "CSE311L",
           "preReq": ["CSE213L"]
@@ -346,14 +346,14 @@ const cseCourses=
           "preReq": ["CSE311"]
         },
         {
-"slNo":35,
+          "slNo":35,
           "name": "Discrete Mathematics",
            "_id": "CSE111",
           "level":4,
           "type":"N/A",
           "creditHours":3,
           "category":"",
-      "preReq": []
+          "preReq": [],
         },
         {
           "slNo":36,
@@ -619,7 +619,7 @@ const cseCourses=
         {
           "slNo":62,
           "name": " Data Mining & Big Data",
-           "_id": "CSE441",
+          "_id": "CSE441",
           "type":"",
           "level":11,
           "creditHours":3,
@@ -806,13 +806,13 @@ const cseCourses=
 const countCredit=(array)=>{
   let count=0;
   const x=array.map(item=>{
-    if(item.charAt(item.length-1)==='L'){
+    if(item.length==7&&item.charAt(item.length-1)==='L'){
       count+=1;
     }
     else if(item==='CSE498'){
       count+=6;
     }
-    else{
+    else if(item.length==6){
       count+=3;
     }
   })
@@ -834,10 +834,52 @@ const getNextSemester=()=>{
             nextSemester="Spring";
             
         }
-        // return nextSemester+year.toString().substring(2, 4);
-        return "Summer22";
+        return nextSemester+year.toString().substring(2, 4);
+        // return "Summer22";
 }
-module.exports = {cseCourses,countCredit,getNextSemester};
+const findPre_requisitesParentCourse=(array)=>{
+  const courseIds=array.map(course=>{
+    return course._id
+  })
+  let newArray=[]
+  courseIds.forEach(id=>{
+    cseCourses.forEach(courses=>{
+      if(courses.preReq.includes(id)){
+        const newObject={parentCourseName:courses._id,courseAddedToPreReq:id}
+        newArray.push(newObject)
+      }});
+  })
+  return newArray;
+
+}
+const makeAdvisedStudentObj_forTracker=(data)=>{
+  return data
+}
+const makeObject_to_saveInTacker=(data)=>{
+  // console.log(data);
+  const object={
+    _id:data.nextSem,
+    authors:[
+      {
+        authorName:data.user.name,
+        authorEmail:data.user.email,
+        AdvisedStudents:[
+          {
+            studentsId:data.data.id,
+            studentsName:data.data.stName,
+            addedToCompleted:data.data.addedToCompleted,
+            deletedFromCompleted:data.data.deletedFromCompleted,
+            lastModified:data.data.lastModified
+
+          }
+        ]
+      }
+    ]
+  }
+  return object;
+}
+module.exports = {cseCourses,countCredit,getNextSemester,findPre_requisitesParentCourse,
+  makeObject_to_saveInTacker};
 // {
 //   "_id": {
 //       "$oid": "61fb6bf71be79c03227d6bbf"

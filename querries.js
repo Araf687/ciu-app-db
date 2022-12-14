@@ -136,6 +136,7 @@ students_collection.bulkWrite(advisingFile.map( function(p) {
                           },
   
                         }
+                      
           }}
   
         }))
@@ -214,3 +215,33 @@ app.post('/addRoutine/:type',(req,res)=>{
   });
 })
 //=====================================================================x=========================
+// db.specificMonthDemo.aggregate([ 
+//   {$project: {
+//     StudentName: 1, 
+    // StudentDateOfBirth:
+    // {$month: '$StudentDateOfBirth'}
+//   }}, 
+//   {$match: {StudentDateOfBirth: 01}} 
+// ]).pretty();
+
+
+//---this querry is used in survey tracker js file. i just save it here. dont know it is important or not
+fetch(`http://localhost:5000/qCheck`)
+        .then(res=>res.json())
+        .then(data=>{
+            console.log(data);
+            // console.log({_id:'Autumn22',customiseList:data.result_1[0].offeredCourse,removalCourses:data.result[0].removalCourses});
+            const tempObj={_id:'Autumn22',customiseList:data.result_1[0].offeredCourse,removalCourses:data.result[0].removalCourses};
+            fetch(`http://localhost:5000/replace`,{
+                body:JSON.stringify(tempObj),
+                method:"post",
+                headers:{
+                    "Content-Type":"application/json"
+                }
+            })
+            .then(res=>res.json())
+            .then(data=>{
+                console.log(data);
+            })
+            // setAttendeesData(data.result.authors);
+        })
